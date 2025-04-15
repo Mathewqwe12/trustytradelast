@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тестовая карточка</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .account-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.2s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      height: 320px;
+      margin-bottom: 20px;
+    }
+    
+    .card-image {
+      width: 100%;
+      height: 160px;
+      overflow: hidden;
+      position: relative;
+      background: #eee;
+    }
+    
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .card-content {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .game-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #007aff;
+      color: white;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 8px;
+      align-self: flex-start;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+    
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto;
+    }
+    
+    .price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+    }
+    
+    .seller {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    
+    .seller-name {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .seller-rating {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .star {
+      color: #ffd700;
+      margin-right: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Тестовая карточка</h1>
+    
+    <div class="account-card">
+      <div class="card-image">
+        <img src="data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%231a1a1a%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%20fill%3D%22%23ff4d4d%22%20font-size%3D%2224%22%3EDota%202%3C%2Ftext%3E%3C%2Fsvg%3E" alt="Dota 2 Account">
+      </div>
+      <div class="card-content">
+        <div class="game-badge">Dota 2</div>
+        <h3 class="card-title">Premium Dota 2 аккаунт с редкими предметами</h3>
+        <div class="card-footer">
+          <div class="price">5 999 ₽</div>
+          <div class="seller">
+            <span class="seller-name">User 123</span>
+            <div class="seller-rating">
+              <span class="star">⭐</span>
+              4.8
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html> 

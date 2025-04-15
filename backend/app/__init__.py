@@ -1,0 +1,1 @@
+"""TrustyTrade backend application"""

@@ -1,0 +1,26 @@
+---
+config:
+  layout: fixed
+---
+flowchart TD
+    start(["Старт: Пользователь запускает бота"]) --> choice{{"Выберите действие"}}
+    choice --> sell["Хочу продать аккаунт"] & buy["Хочу купить аккаунт"]
+    sell --> createAd["Заполнить данные об аккаунте"]
+    createAd --> adReview["Объявление создается и публикуется"]
+    adReview --> waitBuyer["Ожидание покупателя"]
+    waitBuyer --> dealInit["Покупатель инициирует сделку"]
+    dealInit --> escrowHold["Средства депонируются в escrow"]
+    escrowHold --> deliverAccount["Продавец передаёт данные аккаунта"]
+    deliverAccount --> confirmDeal["Покупатель подтверждает получение"]
+    confirmDeal --> releaseFunds["Escrow отправляет средства продавцу"]
+    releaseFunds --> endSell(["Сделка завершена"])
+    buy --> browseListings["Поиск аккаунтов через фильтры"]
+    browseListings --> selectAd["Выбор подходящего аккаунта"]
+    selectAd --> startDeal["Инициация безопасной сделки"]
+    startDeal --> payFunds["Покупатель вносит оплату"]
+    payFunds --> receiveAccount["Получение аккаунта от продавца"]
+    receiveAccount --> confirmAndRate["Подтверждение и отзыв"]
+    confirmAndRate --> endBuy(["Сделка завершена"])
+    dealInit -- Проблема? --> support["Обратиться в поддержку / арбитраж"]
+    payFunds -- Проблема? --> support
+    deliverAccount -- Проблема? --> support
