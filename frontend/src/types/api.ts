@@ -1,38 +1,39 @@
 // Базовые типы данных
 export interface User {
   id: number;
-  username: string;
+  name: string;
+  username?: string;
   rating: number;
-  deals_count?: number;
-  is_verified?: boolean;
-  registration_date?: string;
-  avatar_url?: string;
+  deals_completed: number;
+  reviews_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Account {
   id: number;
-  title: string;
-  description: string | null;
-  price: number;
   game: string;
-  is_available: boolean | null;
-  image_url?: string | null;
+  title: string;
+  description?: string;
+  price: number;
+  image_url?: string;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
   seller: {
     id: number;
     name: string;
     rating: number;
-  } | null;
-  deals?: any[] | null;
-  created_at: string | null;
-  updated_at: string | null;
+  };
 }
 
 export interface Deal {
   id: number;
-  account: Account;
-  buyer: User;
-  seller: User;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  account_id: number;
+  buyer_id: number;
+  seller_id: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  price: number;
   created_at: string;
   updated_at: string;
 }

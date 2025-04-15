@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import asyncio
 import json
 import logging
-import threading
 from typing import Any, Dict, Optional
 
-from config import BOT_TOKEN, SECRET_KEY, WEBAPP_URL
-from flask import Flask, jsonify, request
+from config import BOT_TOKEN, WEBAPP_URL
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
-from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 # Настройка логирования
 logging.basicConfig(
@@ -18,67 +17,104 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Инициализация Flask приложения
-app = Flask(__name__)
-app.config["SECRET_KEY"] = SECRET_KEY
-
-
-class UserDataManager:
-    """Менеджер для работы с данными пользователей"""
-
-    def __init__(self):
-        self._data: Dict[int, Dict[str, Any]] = {}
-        self._lock = threading.Lock()
-
-    def get_user_data(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Получение данных пользователя"""
-        with self._lock:
-            return self._data.get(user_id)
-
-    def save_user_data(self, user_id: int, data: Dict[str, Any]) -> None:
-        """Сохранение данных пользователя"""
-        with self._lock:
-            self._data[user_id] = data
-
-    def delete_user_data(self, user_id: int) -> None:
-        """Удаление данных пользователя"""
-        with self._lock:
-            self._data.pop(user_id, None)
-
-
-# Инициализация менеджера данных
-user_data_manager = UserDataManager()
-
-
 def validate_webapp_data(data: Dict[str, Any]) -> bool:
     """Валидация данных от Web App"""
     required_fields = ["action", "timestamp"]
     return all(field in data for field in required_fields)
 
 
-def start(update: Update, context: CallbackContext) -> None:
+def get_main_keyboard() -> InlineKeyboardMarkup:
+    """Создание основной клавиатуры"""
+    keyboard = [
+        [InlineKeyboardButton("🎮 Открыть мини-приложение", web_app=WebAppInfo(url=WEBAPP_URL))],
+        [InlineKeyboardButton("📝 Мой профиль", callback_data="profile"),
+         InlineKeyboardButton("❓ Помощь", callback_data="help")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработка команды /start"""
     try:
+        logger.info("Начинаю обработку команды /start")
         user_id = update.effective_user.id
-        logger.info(f"Получена команда /start от пользователя {user_id}")
+        logger.info(f"ID пользователя: {user_id}")
         user = update.effective_user
-
-        keyboard = [
-            [InlineKeyboardButton("Открыть мини-приложение", web_app=WebAppInfo(url=WEBAPP_URL))]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        logger.info(f"Данные пользователя: {user}")
 
         message = (
-            f"Привет, {user.first_name}! " "Нажмите на кнопку ниже, чтобы открыть мини-приложение."
+            f"👋 Привет, {user.first_name}!\n\n"
+            "Я бот для безопасной торговли игровыми аккаунтами. "
+            "Используйте мини-приложение для просмотра и создания предложений.\n\n"
+            "📌 Основные команды:\n"
+            "/help - показать справку\n"
+            "/profile - ваш профиль\n"
         )
-        update.message.reply_text(message, reply_markup=reply_markup)
+        logger.info("Подготовил сообщение, пытаюсь отправить")
+        await update.message.reply_text(message, reply_markup=get_main_keyboard())
         logger.info(f"Ответ на команду /start отправлен пользователю {user.id}")
     except Exception as e:
-        logger.error(f"Ошибка при обработке команды /start: {str(e)}")
-        update.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        logger.error(f"Детальная ошибка при обработке команды /start: {str(e)}", exc_info=True)
+        await update.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте позже.")
 
 
-def handle_message(update: Update, context: CallbackContext) -> None:
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработка команды /help"""
+    try:
+        user_id = update.effective_user.id
+        logger.info(f"Получена команда /help от пользователя {user_id}")
+
+        help_text = (
+            "🔍 Справка по использованию бота:\n\n"
+            "1️⃣ Для начала работы нажмите кнопку 'Открыть мини-приложение'\n"
+            "2️⃣ В приложении вы можете:\n"
+            "   • Просматривать доступные аккаунты\n"
+            "   • Создавать предложения о продаже\n"
+            "   • Участвовать в сделках\n"
+            "   • Оставлять отзывы\n\n"
+            "📌 Основные команды:\n"
+            "/start - перезапустить бота\n"
+            "/help - показать эту справку\n"
+            "/profile - информация о вашем профиле\n\n"
+            "🔐 Безопасность:\n"
+            "• Все сделки проходят через гаранта\n"
+            "• Используется защищенное соединение\n"
+            "• Данные хранятся в зашифрованном виде\n\n"
+            "❓ Остались вопросы? Обратитесь в поддержку!"
+        )
+        await update.message.reply_text(help_text, reply_markup=get_main_keyboard())
+        logger.info(f"Ответ на команду /help отправлен пользователю {user_id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /help: {str(e)}")
+        await update.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте позже.")
+
+
+async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработка команды /profile"""
+    try:
+        user_id = update.effective_user.id
+        user = update.effective_user
+        logger.info(f"Получена команда /profile от пользователя {user_id}")
+
+        profile_text = (
+            f"👤 Профиль пользователя {user.first_name}\n\n"
+            f"🆔 ID: {user_id}\n"
+            f"👤 Username: @{user.username or 'не указан'}\n\n"
+            "📊 Статистика:\n"
+            "💰 Успешных сделок: 0\n"
+            "⭐ Рейтинг: 0.0/5.0\n"
+            "📝 Отзывов получено: 0\n\n"
+            "🔍 Для просмотра подробной статистики и истории сделок\n"
+            "используйте мини-приложение 👇"
+        )
+        await update.message.reply_text(profile_text, reply_markup=get_main_keyboard())
+        logger.info(f"Ответ на команду /profile отправлен пользователю {user_id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /profile: {str(e)}")
+        await update.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте позже.")
+
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработка сообщений с данными от Web App"""
     try:
         user_id = update.effective_user.id
@@ -90,101 +126,100 @@ def handle_message(update: Update, context: CallbackContext) -> None:
             if not validate_webapp_data(data):
                 raise ValueError("Некорректный формат данных")
 
-            user_data_manager.save_user_data(user_id, data)
-            logger.info(f"Сохранены данные от пользователя {user_id}: {data}")
-
-            update.message.reply_text("Данные успешно сохранены")
+            # Обработка различных типов действий
+            action = data.get("action")
+            if action == "create_deal":
+                await handle_deal_creation(update, data)
+            elif action == "update_profile":
+                await handle_profile_update(update, data)
+            else:
+                await update.message.reply_text("✅ Данные успешно получены")
         else:
-            update.message.reply_text("Пожалуйста, используйте кнопку для запуска мини-приложения.")
+            await update.message.reply_text(
+                "Пожалуйста, используйте кнопки или мини-приложение для взаимодействия.",
+                reply_markup=get_main_keyboard()
+            )
     except json.JSONDecodeError:
         logger.error(f"Ошибка декодирования JSON от пользователя {user_id}")
-        update.message.reply_text("Ошибка формата данных. Пожалуйста, попробуйте снова.")
+        await update.message.reply_text("❌ Ошибка формата данных. Пожалуйста, попробуйте снова.")
     except ValueError as e:
         logger.error(f"Ошибка валидации данных: {str(e)}")
-        update.message.reply_text("Ошибка валидации данных. Пожалуйста, попробуйте снова.")
+        await update.message.reply_text("❌ Ошибка валидации данных. Пожалуйста, попробуйте снова.")
     except Exception as e:
         logger.error(f"Неожиданная ошибка при обработке сообщения: {str(e)}")
-        update.message.reply_text("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        await update.message.reply_text("❌ Произошла ошибка. Пожалуйста, попробуйте позже.")
 
 
-def error_handler(update: Optional[Update], context: CallbackContext) -> None:
+async def handle_deal_creation(update: Update, data: Dict[str, Any]) -> None:
+    """Обработка создания сделки"""
+    try:
+        deal_info = data.get("deal_info", {})
+        message = (
+            "🎮 Новая сделка создана!\n\n"
+            f"🎯 Игра: {deal_info.get('game', 'Не указана')}\n"
+            f"💰 Цена: {deal_info.get('price', 0)} RUB\n"
+            f"📝 Описание: {deal_info.get('description', 'Нет описания')}\n\n"
+            "ℹ️ Используйте мини-приложение для управления сделкой"
+        )
+        await update.message.reply_text(message, reply_markup=get_main_keyboard())
+    except Exception as e:
+        logger.error(f"Ошибка при создании сделки: {str(e)}")
+        raise
+
+
+async def handle_profile_update(update: Update, data: Dict[str, Any]) -> None:
+    """Обработка обновления профиля"""
+    try:
+        profile_info = data.get("profile_info", {})
+        message = (
+            "✅ Профиль обновлен!\n\n"
+            f"👤 Имя: {profile_info.get('name', 'Не указано')}\n"
+            f"📱 Контакт: {profile_info.get('contact', 'Не указан')}\n"
+            "ℹ️ Изменения вступят в силу в течение нескольких минут"
+        )
+        await update.message.reply_text(message, reply_markup=get_main_keyboard())
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении профиля: {str(e)}")
+        raise
+
+
+async def error_handler(update: Optional[Update], context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик ошибок"""
-    logger.error(f"Update {update} caused error {context.error}", exc_info=context.error)
+    logger.error("=== ОШИБКА В БОТЕ ===")
+    logger.error(f"Update: {update}")
+    logger.error(f"Error: {context.error}", exc_info=context.error)
+    logger.error(f"Chat data: {context.chat_data}")
+    logger.error(f"User data: {context.user_data}")
+    logger.error("=== КОНЕЦ ОШИБКИ ===")
 
 
-# API эндпоинты
-@app.route("/api/user/<int:user_id>", methods=["GET"])
-def get_user_data(user_id: int):
-    """Получение данных пользователя по ID"""
-    try:
-        data = user_data_manager.get_user_data(user_id)
-        if data:
-            return jsonify({"success": True, "data": data})
-        return jsonify({"success": False, "error": "User not found"})
-    except Exception as e:
-        logger.error(f"Ошибка при получении данных пользователя {user_id}: {str(e)}")
-        return jsonify({"success": False, "error": "Internal server error"}), 500
+def get_application():
+    """Получение экземпляра Application"""
+    application = Application.builder().token(BOT_TOKEN).build()
 
+    # Добавляем обработчики команд
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("profile", profile_command))
+    application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_message))
+    application.add_error_handler(error_handler)
 
-@app.route("/api/user/<int:user_id>", methods=["POST"])
-def save_user_data(user_id: int):
-    """Сохранение данных пользователя"""
-    try:
-        data = request.json
-        if not validate_webapp_data(data):
-            return jsonify({"success": False, "error": "Invalid data format"}), 400
-
-        user_data_manager.save_user_data(user_id, data)
-        return jsonify({"success": True})
-    except Exception as e:
-        logger.error(f"Ошибка при сохранении данных пользователя {user_id}: {str(e)}")
-        return jsonify({"success": False, "error": "Internal server error"}), 500
-
-
-@app.route("/api/webhook", methods=["POST"])
-def telegram_webhook():
-    """Обработчик вебхуков от Telegram для Vercel"""
-    try:
-        if request.method == "POST":
-            update = Update.de_json(request.get_json(force=True), None)
-            updater = get_updater()
-            updater.dispatcher.process_update(update)
-            return jsonify({"success": True})
-        return jsonify({"success": False})
-    except Exception as e:
-        logger.error(f"Ошибка при обработке вебхука: {str(e)}")
-        return jsonify({"success": False, "error": "Internal server error"}), 500
-
-
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    """Проверка работоспособности API"""
-    return jsonify({"status": "healthy"})
-
-
-def get_updater():
-    """Получение экземпляра Updater"""
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.web_app_data, handle_message))
-    dp.add_error_handler(error_handler)
-
-    return updater
+    return application
 
 
 def main():
     """Запуск бота"""
-    try:
-        updater = get_updater()
-        updater.start_polling()
-        logger.info("Бот успешно запущен")
-        updater.idle()
-    except Exception as e:
-        logger.error(f"Ошибка при запуске бота: {str(e)}")
-        raise
+    logger.info("Начинаю запуск бота")
+    app = get_application()
+    logger.info("Application создан, начинаю polling")
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен пользователем")
+    except Exception as e:
+        logger.error(f"Критическая ошибка: {str(e)}")
+        raise

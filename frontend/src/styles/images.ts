@@ -4,10 +4,10 @@ const encodeSvg = (svg: string) => {
 };
 
 export const gameImages = {
-  placeholder: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f0f0f0"/><text x="50%" y="50%" text-anchor="middle" fill="#999">No Image</text></svg>')}`,
-  dota2: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#1a1a1a"/><text x="50%" y="50%" text-anchor="middle" fill="#ff4d4d" font-size="24">Dota 2</text></svg>')}`,
-  csgo: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#2a2a2a"/><text x="50%" y="50%" text-anchor="middle" fill="#ffcc00" font-size="24">CS:GO</text></svg>')}`,
-  wow: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#003366"/><text x="50%" y="50%" text-anchor="middle" fill="#ffcc00" font-size="20">World of Warcraft</text></svg>')}`,
-  genshin: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#4d1933"/><text x="50%" y="50%" text-anchor="middle" fill="#ff99cc" font-size="20">Genshin Impact</text></svg>')}`,
-  pubg: `data:image/svg+xml;charset=UTF-8,${encodeSvg('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#333300"/><text x="50%" y="50%" text-anchor="middle" fill="#ffff99" font-size="24">PUBG</text></svg>')}`,
-};
+  dota2: 'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota2_social.jpg',
+  csgo: 'https://cdn.cloudflare.steamstatic.com/apps/csgo/images/csgo_social.jpg',
+  wow: 'https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/blt5440cbe6b11972e4/6526a4cb4e4e6248b0021cce/WoW_Classic_SoD_Logo_960x540.png',
+  genshin: 'https://webstatic.hoyoverse.com/upload/op-public/2022/08/05/ae83df4a27ca27e7b98d54c962010a0e_3430855268735060274.jpg',
+  pubg: 'https://cdn.akamai.steamstatic.com/steam/apps/578080/capsule_616x353.jpg',
+  placeholder: 'https://placehold.co/600x400?text=No+Image',
+} as const;

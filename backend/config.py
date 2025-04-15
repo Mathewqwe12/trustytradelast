@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Токен бота
-BOT_TOKEN = os.getenv('BOT_TOKEN', '7364226532:AAH8YmUtoB-PmKLI1DcLUTRx2CRPakw7dzw')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN не найден в .env файле")
 
-# URL веб-приложения - Обновлено для Vercel
-WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://tg-app-o1fzwzzon-mathews-projects-6af1e42a.vercel.app')
+# URL веб-приложения
+WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://trustytradelast.vercel.app/')
 
 # Настройки сервера
 HOST = os.getenv('HOST', '0.0.0.0')
