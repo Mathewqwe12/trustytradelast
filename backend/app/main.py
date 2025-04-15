@@ -46,10 +46,12 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:4000",
         "http://127.0.0.1:4000",
-        "http://localhost:5000",  # Добавляем порт фронтенда
-        "http://127.0.0.1:5000"   # И его localhost вариант
-    ],  # Разрешаем наши фронты и только локальный фронт
-    allow_credentials=True,  # Включаем поддержку credentials
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "https://trustytradelast.vercel.app",
+        "https://*.up.railway.app"  # Добавляем домен Railway
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -57,10 +59,28 @@ app.add_middleware(
 # Middleware для логирования запросов
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logger.debug(f"Request: {request.method} {request.url}")
-    logger.debug(f"Headers: {request.headers}")
+    logger.info(f"=== INCOMING REQUEST ===")
+    logger.info(f"Method: {request.method}")
+    logger.info(f"URL: {request.url}")
+    logger.info(f"Path: {request.url.path}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    
+    # Логируем тело запроса для POST/PUT
+    if request.method in ["POST", "PUT"]:
+        try:
+            body = await request.body()
+            logger.info(f"Request Body: {body.decode()}")
+        except Exception as e:
+            logger.error(f"Error reading body: {e}")
+
     response = await call_next(request)
-    logger.debug(f"Response status: {response.status_code}")
+    
+    # Логируем ответ
+    logger.info(f"=== RESPONSE ===")
+    logger.info(f"Status: {response.status_code}")
+    logger.info(f"Headers: {dict(response.headers)}")
+    logger.info(f"==================")
+    
     return response
 
 # @app.middleware("http")
@@ -145,23 +165,14 @@ async def options_route(request: Request):
 
 @app.get("/api/v1/test-db")
 async def test_db():
-    """Тестовый эндпоинт для проверки подключения к БД"""
+    """Тестовый эндпоинт для проверки подключения к базе данных"""
     try:
-        # Пробуем создать подключение
         async with engine.connect() as conn:
-            # Пробуем выполнить простой запрос
-            result = await conn.execute(text("SELECT 1"))
-            return {"status": "ok", "message": "Database connection successful"}
+            await conn.execute(text("SELECT 1"))
+        return {"status": "ok", "message": "Database connection successful"}
     except Exception as e:
         logger.error(f"Database connection error: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={
-                "status": "error",
-                "message": "Database connection failed",
-                "error": str(e)
-            }
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/test-tables")
 async def test_tables():

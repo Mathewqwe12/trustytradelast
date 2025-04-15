@@ -15,38 +15,16 @@ export default function AccountList() {
 
   async function fetchAccounts() {
     try {
-      // TODO: Заменить на реальный API
-      const mockAccounts: Account[] = [
-        {
-          id: 1,
-          game: 'Dota 2',
-          title: 'Аккаунт 6000 MMR',
-          description: 'Много редких сетов, аркан',
-          price: 15000,
-          seller: {
-            id: 1,
-            name: 'Pro Seller',
-            rating: 4.8,
-          },
-        },
-        {
-          id: 2,
-          game: 'CS:GO',
-          title: 'Аккаунт Global Elite',
-          description: 'Много скинов, ножи',
-          price: 25000,
-          seller: {
-            id: 2,
-            name: 'Game Master',
-            rating: 4.9,
-          },
-        },
-      ];
-
-      const displayAccounts = mockAccounts.map(convertApiAccount);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/accounts`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: Account[] = await response.json();
+      const displayAccounts = data.map(convertApiAccount);
       setAccounts(displayAccounts);
       setLoading(false);
     } catch (err) {
+      console.error('Error fetching accounts:', err);
       setError('Не удалось загрузить аккаунты');
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import AsyncGenerator
 
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -18,25 +19,33 @@ load_dotenv()
 # Закомментируем хардкодный SQLite URL
 # DATABASE_URL = f"sqlite+aiosqlite:///{DB_DIR}/trustytrade.db"
 
-# Используем DATABASE_URL из настроек (settings)
+# Получаем URL базы данных из переменных окружения
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Если это URL от Railway (начинается с postgres://), преобразуем его в формат asyncpg
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+
+if not DATABASE_URL:
+    DATABASE_URL = "postgresql+asyncpg://trustytrade:trustytrade@localhost:5433/trustytrade_db"
+
+# Создаем асинхронный движок
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=True,
-    # connect_args можно убрать, так как он для SQLite
-    # connect_args={"check_same_thread": False}
+    DATABASE_URL,
+    echo=True,  # Включаем вывод SQL-запросов в консоль
+    pool_size=5,  # Размер пула соединений
+    max_overflow=10,  # Максимальное количество дополнительных соединений
 )
 
-# Создаем фабрику асинхронных сессий
+# Создаем фабрику сессий
 AsyncSessionLocal = sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
 )
 
-async def get_db() -> AsyncSession:
-    """Функция-генератор для получения асинхронной сессии БД"""
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Получение сессии базы данных"""
     async with AsyncSessionLocal() as session:
         try:
             yield session
